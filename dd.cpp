@@ -1,36 +1,79 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+bool possible(const vector<int>& a, int k, int t) {
+    int n = a.size();
+
+    // b[i] = i + max(a[p] - p), p in [i-t, i]
+    vector<int> b(n);
+
+    deque<int> dq;
+
+    for (int i = 0; i < n; i++) {
+        // Add current index
+        int val = a[i] - i;
+
+        while (!dq.empty() && a[dq.back()] - dq.back() <= val)
+            dq.pop_back();
+
+        dq.push_back(i);
+
+        // Remove indices outside [i-t, i]
+        while (!dq.empty() && dq.front() < i - t)
+            dq.pop_front();
+
+        int best = a[dq.front()] - dq.front();
+        b[i] = i + best;
+    }
+
+    // Since b is sorted, more than k equal values
+    // exists iff b[i] == b[i-k].
+    for (int i = k; i < n; i++) {
+        if (b[i] <= b[i - k])
+            return false;
+    }
+
+    return true;
+}
+
 int main() {
-    int N;
-    cin >> N;
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
-    vector<long long> a(N);
+    int T;
+    cin >> T;
 
-    for (int i = 0; i < N; i++) {
-        cin >> a[i];
+    while (T--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<int> a(n);
+
+        for (int &x : a)
+            cin >> x;
+
+        sort(a.begin(), a.end());
+
+        // If already valid
+        if (possible(a, k, 0)) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // Answer is at most n
+        int low = 0, high = n;
+
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+
+            if (possible(a, k, mid))
+                high = mid;
+            else
+                low = mid + 1;
+        }
+
+        cout << low << '\n';
     }
-
-    vector<long long> cnt(N + 1, 0);
-
-    long long prefix = 0;
-    long long answer = 0;
-
-    cnt[0] = 1;
-
-    for (int i = 0; i < N; i++) {
-        prefix += a[i];
-
-        int rem = prefix % N;
-
-        if (rem < 0)
-            rem += N;
-
-        answer += cnt[rem];
-        cnt[rem]++;
-    }
-
-    cout << answer << endl;
 
     return 0;
 }
